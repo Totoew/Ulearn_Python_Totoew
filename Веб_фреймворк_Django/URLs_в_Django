@@ -1,0 +1,33 @@
+from django.contrib import admin
+from django.urls import path
+from .views import (
+    hello,
+    all_vacancies,
+    filter_vacancies,
+    get_salary_year_dynamic,
+    get_count_year_dynamic,
+    get_top_10_salary_city,
+    get_top_10_vac_city,
+)
+
+urlpatterns = [
+    path("hello/", hello),
+    path("vacancies/", all_vacancies),
+    path("vacancies/filter/", filter_vacancies),
+    path(
+        "vacancies/dynamic/salary-year/",
+        get_salary_year_dynamic,
+    ),
+    path(
+        "vacancies/dynamic/count-year/",
+        get_count_year_dynamic,
+    ),
+    path(
+        "vacancies/statistic/top10-salary-city/",
+        get_top_10_salary_city,
+    ),
+    path(
+        "vacancies/statistic/top10-vac-city/",
+        get_top_10_vac_city,
+    ),
+]
