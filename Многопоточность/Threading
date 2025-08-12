@@ -1,0 +1,49 @@
+import threading
+import requests
+from bs4 import BeautifulSoup
+from math import ceil
+
+# Функция для получения валют
+def get_currencies(url, id, currencies):
+    response = requests.get(url)
+    if response.status_code == 200:
+        secret_code()
+        soup = BeautifulSoup(response.text, 'html.parser')
+        currency = str(soup.find_all('valute')[id])
+        if currency not in currencies:
+            currencies.append(currency)
+
+
+# Функция для получения валют
+def fetch_currency_batch(urls_batch, id, currencies):
+    threads = []
+    for url in urls_batch:
+        thread = threading.Thread(target=get_currencies, args=(url, id, currencies))
+        threads.append(thread)
+        thread.start()
+    
+    # Ожидание завершения всех потоков в батче
+    for thread in threads:
+        thread.join()
+
+
+
+if __name__ == '__main__':
+    currencies = []
+    id = int(input())
+    
+    
+    batch_size = 10 # Размер батча, количество потоков, которые будут запускаться одновременно
+    total_batches = ceil(len(urls) / batch_size)
+
+    # Запуск потоков батчами
+    for i in range(total_batches):
+        start_index = i * batch_size
+        end_index = min((i + 1) * batch_size, len(urls))
+        urls_batch = urls[start_index:end_index]
+        
+        fetch_currency_batch(urls_batch, id, currencies)
+
+    # Формирование строки с валютами
+    currencies_string = ''.join(currencies)
+    print(currencies_string)
