@@ -1,0 +1,46 @@
+import re
+import csv
+
+
+def delete_html_tags(string):
+    return re.sub('<[^>]+>', '', string)
+
+def change_datatime_format(string):
+    return re.sub(r'\b([01]\d|2[0-3])\.(\d{2})\b', r'\1:\2', string)
+
+def format_date_time(date_time):
+     return re.sub(r'(\d{4})-(\d{2})-(\d{2})T(\d{2}:\d{2}:\d{2})\+\d{4}',
+                          r'\4 \3/\2/\1', date_time)
+
+def do_upper(key_words, information):
+    key_words = key_words.split(',')
+    new_info = []
+    for line in information:
+        prep_info = []
+        for word in line:
+            word = delete_html_tags(word)
+            word = change_datatime_format(word)
+            word = format_date_time(word)
+            for key_word in key_words:
+                model = re.compile(r'\b\w*' + re.escape(key_word) + r'\w*\b', re.IGNORECASE)
+                word = model.sub(lambda remake: remake.group(0).upper(), word)
+            prep_info.append(word)
+        new_info.append(prep_info)
+    return new_info
+
+def main(file, new_file, highlight):
+    with open(file, 'r', encoding='utf-8-sig') as f1:
+        reader = csv.reader(f1)
+        information = [current_line for current_line in reader]
+        new_information = do_upper(highlight, information)
+
+    with open(new_file, 'w', newline='') as f2:
+            writer = csv.writer(f2)
+            writer.writerows(new_information)
+    return
+
+if __name__ == '__main__':
+    file = input()
+    new_file = input()
+    highlight = input()
+    main(file, new_file, highlight)
