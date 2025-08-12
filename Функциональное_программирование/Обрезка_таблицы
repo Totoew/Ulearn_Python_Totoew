@@ -1,0 +1,92 @@
+import csv
+import prettytable
+from prettytable import ALL
+
+titles = ["Название", "Описание", "Навыки", "Опыт работы", "Премиум-вакансия", "Компания", "Оклад",
+          "Название региона", "Дата публикации вакансии"]
+
+def csv_reader(file_name):
+    with open(file_name, 'r', encoding='utf-8-sig') as f1:
+        reader = csv.reader(f1)
+        next(reader)
+        list_reader = list(reader)
+        return list_reader
+
+def print_vacancies(vacancies):
+    index = 1
+    all_spisok = []
+    for vacancy in vacancies:
+        formatted_line = {}
+        for i in range(len(titles)):
+            formatted_line[titles[i]] = vacancy[i].strip()
+        new_dict = formatted_line.copy()
+        list_of_tuples = list(formatted_line.items())
+        new_dict["Название региона"] = f"{list_of_tuples[7][1]}"
+        new_dict["Дата публикации вакансии"] = f"{list_of_tuples[8][1]}"
+        spisok = list(new_dict.values())
+        spisok.insert(0, index)
+        if len(spisok[2]) > 100:
+            spisok[2] = spisok[2][:100] + '...'
+        if len(spisok[3]) > 100:
+            spisok[3] = spisok[3][:100] + '...'
+        else:
+            pass
+        all_spisok.append(spisok)
+        index += 1
+    return all_spisok
+
+def do_table(lst):
+    if len(lst) == 0:
+        print("Нет данных")
+    else:
+        table = prettytable.PrettyTable(["№", "Название", "Описание", "Навыки", "Опыт работы", "Премиум-вакансия",
+                                         "Компания", "Оклад", "Название региона", "Дата публикации вакансии"])
+        table.hrules = ALL
+        table.max_width = 20
+        table.align = 'l'
+        for row in lst:
+            table.add_row(row)
+        return table
+
+def parse_table(table, vac, cols):
+    if len(cols) == 1:
+        if cols[0] == "":
+            new_cols = ["Название", "Описание", "Навыки", "Опыт работы", "Премиум-вакансия", "Компания", "Оклад",
+              "Название региона", "Дата публикации вакансии"]
+            new_cols.insert(0, "№")
+        else:
+            new_cols = cols.copy()
+            new_cols.insert(0, "№")
+    else:
+        new_cols = cols.copy()
+        new_cols.insert(0, "№")
+
+    filtered_table = prettytable.PrettyTable()
+    filtered_table.field_names = table.field_names
+    filtered_table.hrules = ALL
+    filtered_table.max_width = 20
+    filtered_table.align = 'l'
+
+    if len(vac) == 2:
+        start_i = int(vac[0]) - 1
+        end_i = int(vac[1])
+        filtered_table = table.get_string(start=start_i, end=end_i, fields=new_cols)
+    elif len(vac) == 1:
+        start_i = int(vac[0]) - 1
+        filtered_table = table.get_string(start=start_i, end=len(table.rows), fields=new_cols)
+    else:
+        filtered_table = table.get_string(start=0,  end=len(table.rows), fields=new_cols)
+    return filtered_table
+
+def main():
+    file = input()
+    vac_from_to = input().split()
+    columns_names = input().split(", ")
+    vacancies = csv_reader(file)
+    res_vac = print_vacancies(vacancies)
+    res_table = do_table(res_vac)
+    result_table = parse_table(res_table, vac_from_to, columns_names)
+    print(result_table)
+
+if __name__ == '__main__':
+    main()
