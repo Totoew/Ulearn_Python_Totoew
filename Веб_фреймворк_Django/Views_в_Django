@@ -1,0 +1,142 @@
+from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Avg, Count, F, Subquery, Q
+from django.db.models.functions import Substr, Round, TruncYear
+from django.shortcuts import render, get_object_or_404
+from .models import SiteUser, Vacancy
+
+
+@csrf_exempt
+def hello(request):
+    user_id = request.POST.get('id', '') if request.method == 'POST' else ''
+    name = get_object_or_404(SiteUser, id=user_id).get_name() if user_id else "пользователь"
+    return render(request, 'hello.html', {'name': name})
+
+
+def all_vacancies(request):
+    vacancies = Vacancy.objects.all()
+    data = [{'name': vacancy.name, 'salary': vacancy.salary, 'area_name': vacancy.area_name, 
+             'published_at': vacancy.published_at} for vacancy in vacancies]
+    return render(request, 'vacancies_table.html', {'data': data})
+
+
+def filter_vacancies(request):
+    filter_name_start = request.GET.get('name_start', '')
+    filter_salary = request.GET.get('salary', '')
+    filter_city_start = request.GET.get('city_start', '')
+    vacancy_query = Vacancy.objects.all()
+
+    if filter_name_start:
+        vacancy_query = vacancy_query.filter(name__startswith=filter_name_start)
+    if filter_salary.isdigit():
+        vacancy_query = vacancy_query.filter(salary__gte=filter_salary)
+    if filter_city_start:
+        vacancy_query = vacancy_query.filter(area_name__startswith=filter_city_start)
+
+    vacancy_data = [
+        {
+            'name': vacancy.name,
+            'salary': vacancy.salary,
+            'area_name': vacancy.area_name,
+            'published_at': vacancy.published_at
+        }
+        for vacancy in vacancy_query
+    ]
+    return render(request, 'vacancies_table.html', {'data': vacancy_data})
+
+
+def get_salary_year_dynamic(request):
+    salary_aggregates = (
+        Vacancy.objects
+        .annotate(year=Substr('published_at', 1, 4))
+        .values('year')
+        .annotate(salary=Round(Avg('salary')))  
+        .order_by('year')
+    )
+    data = [
+        {
+            'first': str(item['salary']),
+            'second': str(item['year'])
+        }
+        for item in salary_aggregates
+    ]
+    return render(request, 'dynamics_table.html', {
+        'first_parameter': 'Avg salary',
+        'second_parameter': 'Year',
+        'data': data
+    })
+
+
+def get_count_year_dynamic(request):
+    vacancy_counts = (
+        Vacancy.objects
+        .filter(salary__isnull=False)  
+        .annotate(year=Substr('published_at', 1, 4))
+        .values('year')
+        .annotate(count=Count('id'))  
+        .order_by('year')
+    )
+    data = [
+        {
+            'first': str(item['count']),
+            'second': str(item['year'])
+        }
+        for item in vacancy_counts
+    ]
+    return render(request, 'dynamics_table.html', {
+        'first_parameter': 'Vacancies count',
+        'second_parameter': 'Year',
+        'data': data
+    })
+
+
+def get_top_10_salary_city(request):
+    total_vacancy_count_subquery = Vacancy.objects.filter(salary__isnull=False).count()
+    city_salary_data = (
+        Vacancy.objects.values('area_name')
+        .filter(salary__isnull=False)
+        .annotate(count=Count('salary'))
+        .annotate(
+            a_salary=Round(Avg('salary'), 2),
+            percentage=F('count') * 100.0 / total_vacancy_count_subquery
+        )
+        .filter(percentage__gt=1)
+        .order_by('a_salary')[:10]
+    )
+    top_cities_data = [
+        {
+            'first': str(item['a_salary']),
+            'second': str(item['area_name'])
+        }
+        for item in city_salary_data
+    ]
+    return render(request, 'dynamics_table.html', {
+        'first_parameter': 'Avg salary',
+        'second_parameter': 'City',
+        'data': top_cities_data
+    })
+
+
+def get_top_10_vac_city(request):
+    total_vacancy_count_subquery = Vacancy.objects.filter(salary__isnull=False).count()
+    city_vacancy_data = (
+        Vacancy.objects.values('area_name')
+        .filter(salary__isnull=False)
+        .annotate(count=Count('salary'))
+        .annotate(
+            percentage=Round(F('count') * 1.0 / total_vacancy_count_subquery, 4)
+        )
+        .filter(percentage__gt=0.01)
+        .order_by('-percentage')[:10]
+    )
+    top_city_vacancy_data = [
+        {
+            'first': str(item['percentage']),
+            'second': str(item['area_name'])
+        }
+        for item in city_vacancy_data
+    ]
+    return render(request, 'dynamics_table.html', {
+        'first_parameter': 'Vacancy rate',
+        'second_parameter': 'City',
+        'data': top_city_vacancy_data
+    })
