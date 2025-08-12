@@ -1,0 +1,31 @@
+import math
+import pandas as pd
+import sqlite3
+
+
+def find_rate(df_currency, row):
+    if row['salary_currency'] == 'RUR':
+        return row['salary']
+    if pd.isna(row['salary_currency']):
+        return None
+    if row['date'] in df_currency.index and row['salary_currency'] in df_currency.columns:
+        return row['salary'] * df_currency.at[row['date'], row['salary_currency']]
+    return None
+
+def calculate_salary(row):
+    if pd.isna(row['salary_to']):
+        return row['salary_from']
+    elif pd.isna(row['salary_from']):
+        return row['salary_to']
+    return (row['salary_from'] + row['salary_to']) / 2
+
+df_currency = pd.read_csv('valutes.csv', index_col='date')
+csv_merged = pd.read_csv('vacancies_dif_currencies.csv')
+
+csv_merged['id'] = csv_merged.index + 1
+csv_merged['date'] = pd.to_datetime(csv_merged['published_at'], errors='coerce', utc=True).dt.strftime('%Y-%m')
+csv_merged['salary'] = csv_merged.apply(calculate_salary, axis=1)
+csv_merged['salary'] = csv_merged.apply(lambda x: find_rate(df_currency, x), axis=1)
+
+with sqlite3.connect('student_works/vacancies.db') as connection:
+    csv_merged[['id', 'name', 'salary', 'area_name', 'published_at']].set_index('id').to_sql('vacancies', connection)
