@@ -1,0 +1,15 @@
+import pandas as pd
+
+
+df = pd.read_csv('vacancies_small.csv', encoding='utf-8')
+
+df_rur = df[df['salary_currency'] == 'RUR']
+df_rur['salary_from'] = pd.to_numeric(df_rur['salary_from'], errors='coerce')
+df_rur['salary_to'] = pd.to_numeric(df_rur['salary_to'], errors='coerce')
+df_rur['avg_salary'] = df_rur[['salary_from', 'salary_to']].mean(axis=1)
+
+city_avg_salary = df_rur.groupby('area_name')['avg_salary'].mean().round().astype(int)
+
+sorted_city_avg_salary = dict(sorted(city_avg_salary.items(), key=lambda x: (-x[1], x[0])))
+
+print(sorted_city_avg_salary)
