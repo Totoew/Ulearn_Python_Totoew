@@ -1,0 +1,64 @@
+class TestDivide(TestCase):
+	# Тест на корректность деления положительных чисел
+    def test_both_positive(self):
+        self.assertEqual(divide(8, 4), 2)
+
+    # Тест на корректность деления отрицательных чисел
+    def test_both_negative(self):
+        self.assertEqual(divide(-10, -5), 2)
+
+    # Тест на корректность деления отрицательного числа на положительное
+    def test_negative_divided_by_positive(self):
+        self.assertEqual(divide(-20, 4), -5)
+
+    # Тест на попытку деления на ноль
+    def test_divide_by_zero(self):
+        self.assertEqual(divide(100, 0), "Can't divide by zero")
+
+    # Тест на деление нуля на ненулевое число
+    def test_zero_divided_by_nonzero(self):
+        self.assertEqual(divide(0, 5), 0)
+
+    # Тест на деление на единицу
+    def test_division_by_one(self):
+        self.assertEqual(divide(42, 1), 42)
+
+    # Тест на деление на минус единицу
+    def test_division_by_minus_one(self):
+        self.assertEqual(divide(99, -1), -99)
+
+    # Тест на деление большого числа на малое
+    def test_large_number_divided_by_small(self):
+        self.assertAlmostEqual(divide(9999, 33), 303.0)
+
+    # Тест на деление малого числа на большое
+    def test_small_number_divided_by_large(self):
+        self.assertAlmostEqual(divide(123, 98765), 0.012442363277263677)
+
+    # Тест на деление с остатком
+    def test_remainder_in_division(self):
+        self.assertAlmostEqual(divide(11, 3), 3.6666666666666665)
+
+    # Тест на деление очень большого числа на другое большое число
+    def test_very_large_numbers_division(self):
+        self.assertAlmostEqual(divide(999999999999999, 333333333333333), 3.0)
+
+    # Тест на деление очень маленького числа на другое маленькое число
+    def test_very_small_numbers_division(self):
+        self.assertAlmostEqual(divide(0.000001, 0.000002), 0.5)
+
+    # Тест на деление числа с плавающей точкой на целое число
+    def test_float_divided_by_integer(self):
+        self.assertAlmostEqual(divide(12.345, 2), 6.1725)
+
+    # Тест на деление целого числа на число с плавающей точкой
+    def test_integer_divided_by_float(self):
+        self.assertAlmostEqual(divide(10, 3.14159), 3.1830988618379067)
+
+    # Тест на деление с очень маленьким числом в знаменателе
+    def test_tiny_denominator(self):
+        self.assertAlmostEqual(divide(1, 0.00000000000001), 100000000000000.0)
+
+    # Тест деления нуля на ноль
+    def test_zero_divided_zero(self):
+        self.assertEqual(divide(0, 0), "Can't divide by zero")
