@@ -1,0 +1,18 @@
+import csv
+
+
+def read_file(file):
+    with open(file, "r", encoding="utf-8-sig") as f:
+        csvreader = csv.reader(f)
+        header = next(csvreader)
+        data = []
+        for row in csvreader:
+            current_row = [1 for n in row if n != '']
+            if len(current_row) >= len(header) / 2:
+                data.append(row)
+        return header, data
+    
+file_input = input()
+header, data = read_file(file_input)
+print(header)
+print(data)
