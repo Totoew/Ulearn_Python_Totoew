@@ -1,0 +1,58 @@
+from xmlrpc.server import SimpleXMLRPCServer
+import pandas as pd
+
+def get_vacancy_by_id(id):
+    df = pd.read_csv('vacancies.csv',
+                     names=['Название вакансии', 'Зарплата от', 'Зарплата до', 'Валюта', 'Город', 'Дата'])
+    selected_vacancy = df.iloc[id]
+    return {
+        'Название вакансии': selected_vacancy['Название вакансии'],
+        'Зарплата от': int(selected_vacancy['Зарплата от']),
+        'Зарплата до': int(selected_vacancy['Зарплата до']),
+        'Город': selected_vacancy['Город']
+    }
+
+def get_vacancies_by_city(city):
+    df = pd.read_csv('vacancies.csv',
+                     names=['Название вакансии', 'Зарплата от', 'Зарплата до', 'Валюта', 'Город', 'Дата'])
+    filtered_vacancies = df[df['Город'] == city]
+    result_dict = {}
+    for index, row in filtered_vacancies.iterrows():
+        result_dict[str(index)] = {
+            'Название вакансии': row['Название вакансии'],
+            'Зарплата от': row['Зарплата от'],
+            'Зарплата до': row['Зарплата до'],
+            'Город': row['Город']
+        }
+    return result_dict
+
+def get_vacancies_by_min_salary(salary):
+    df = pd.read_csv('vacancies.csv',
+                     names=['Название вакансии', 'Зарплата от', 'Зарплата до', 'Валюта', 'Город', 'Дата'])
+    filtered_vacancies = df[df['Зарплата от'] >= salary]
+    result_dict = {}
+    for index, row in filtered_vacancies.iterrows():
+        result_dict[str(index)] = {
+            'Название вакансии': row['Название вакансии'],
+            'Зарплата от': row['Зарплата от'],
+            'Зарплата до': row['Зарплата до'],
+            'Город': row['Город']
+        }
+    return result_dict
+
+def exit_server():
+    global server
+    server.quit_flag = 1
+    return 1
+
+def start_server():
+    global server
+    server = SimpleXMLRPCServer(("localhost", 8000))
+    server.register_function(get_vacancy_by_id)
+    server.register_function(get_vacancies_by_city)
+    server.register_function(get_vacancies_by_min_salary)
+    server.register_function(exit_server, 'exit')
+    server.serve_forever()
+
+if __name__ == "__main__":
+    start_server()
