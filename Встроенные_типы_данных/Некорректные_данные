@@ -1,0 +1,70 @@
+import math
+
+def calculate_average_salary(lower_bound, upper_bound):
+    return math.floor((int(lower_bound) + int(upper_bound)) / 2)
+
+def incline_words(amount):
+    int_number = int(amount)
+    if int_number % 10 == 1 and int_number % 100 != 11:
+        return ["рубль", "год"]
+    elif int_number % 10 >= 2 and int_number % 10 <= 4 and ((int_number % 100 < 10 or int_number % 100 > 20) or int_number % 100 == 10):
+        return ["рубля", "года"]
+    else:
+        return ["рублей", "лет"]
+
+while(True):
+    vacancy = input("Введите название вакансии: ")
+    if(vacancy==''):
+        print('Данные некорректны, повторите ввод')
+    else:
+        break
+while(True):
+    vacancy_description = input("Введите описание вакансии: ")
+    if(vacancy_description==''):
+        print('Данные некорректны, повторите ввод')
+    else:
+        break
+town = input("Введите город для вакансии: ")
+
+while(True):
+    work_experience = input("Введите требуемый опыт работы (лет): ")
+    if not work_experience.isdigit():
+        print('Данные некорректны, повторите ввод')
+    else:
+        break
+while(True):
+    lower_bound = input("Введите нижнюю границу оклада вакансии: ")
+    if not lower_bound.isdigit():
+        print('Данные некорректны, повторите ввод')
+    else:
+        break
+while(True):
+    upper_bound = input("Введите верхнюю границу оклада вакансии: ")
+    if not upper_bound.isdigit():
+        print('Данные некорректны, повторите ввод')
+    else:
+        break
+
+while(True):
+    need_free_schedule = input("Нужен свободный график (да / нет): ")
+    if(need_free_schedule not in ['да', 'нет']):
+        print('Данные некорректны, повторите ввод')
+    else:
+        break
+while(True):
+    is_premium_job = input("Является ли данная вакансия премиум-вакансией (да / нет): ")
+    if(is_premium_job not in ['да', 'нет']):
+        print('Данные некорректны, повторите ввод')
+    else:
+        break
+
+work_experience_int = int(work_experience)
+median_salary = calculate_average_salary(lower_bound, upper_bound)
+
+print(vacancy)
+print("Описание:", vacancy_description)
+print("Город:", town)
+print("Требуемый опыт работы:", work_experience_int, incline_words(work_experience_int)[1])
+print("Средний оклад:", median_salary, incline_words(median_salary)[0])
+print("Свободный график:", need_free_schedule)
+print("Премиум-вакансия:", is_premium_job)
