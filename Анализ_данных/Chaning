@@ -1,0 +1,92 @@
+import pandas as pd
+import numpy as np
+
+
+def load_and_prepare_data(file_path):
+    vacancies = pd.read_csv(file_path)
+    vacancies['year'] = pd.to_datetime(vacancies['published_at']).dt.year
+    vacancies['average_salary'] = (vacancies[['salary_from', 'salary_to']]
+                                   .mean(axis=1)
+                                   .map(np.floor)
+                                   .astype(int))
+    vacancies['vacancy_count'] = 0 
+    return vacancies[(vacancies['salary_currency'] == 'RUR') & (vacancies['year'] >= vacancies['year'].max() - 4)]
+
+def calculate_average_salary_by_year(vacancies):
+    return (vacancies.groupby('year')['average_salary']
+            .mean()
+            .map(np.floor)
+            .astype(int)
+            .iloc[-5:]
+            .to_dict())
+
+def calculate_vacancy_count_by_year(vacancies):
+    return (vacancies.groupby('year')['vacancy_count']
+            .count()
+            .iloc[-5:]
+            .to_dict())
+
+def calculate_average_salary_by_year_for_role(role_vacancies, target_years):
+    return (role_vacancies.groupby('year')['average_salary']
+            .mean()
+            .map(np.floor)
+            .astype(int)
+            .reindex(target_years, fill_value=0)
+            .to_dict())
+
+def calculate_vacancy_count_by_year_for_role(role_vacancies, target_years):
+    return (role_vacancies.groupby('year')['vacancy_count']
+            .count()
+            .reindex(target_years, fill_value=0)
+            .to_dict())
+
+def calculate_average_salary_by_area(role_vacancies, total_role_vacancies):
+    return (role_vacancies.groupby('area_name')
+            .agg(average_salary=('average_salary', 'mean'), vacancy_count=('vacancy_count', 'count'))
+            .map(np.floor)
+            .astype(int)
+            .assign(percentage=lambda df: df['vacancy_count'] / total_role_vacancies)
+            .query('percentage >= 0.01')
+            .sort_values(['average_salary', 'area_name'], ascending=[False, True])
+            .iloc[:10]['average_salary']
+            .to_dict())
+
+def calculate_vacancy_percentage_by_area(role_vacancies, total_role_vacancies):
+    return (role_vacancies.groupby('area_name')
+            .agg(vacancy_count=('vacancy_count', 'count'))
+            .assign(percentage=lambda df: df['vacancy_count'] / total_role_vacancies)
+            .query('percentage >= 0.01')
+            .round(4)
+            .sort_values(['percentage', 'area_name'], ascending=[False, True])
+            .iloc[:10]['percentage']
+            .to_dict())
+
+def main():
+    file_path = 'vacancies_for_learn.csv'
+    role_name = input()
+    
+    prepared_vacancies = load_and_prepare_data(file_path)
+    target_years = pd.Series(range(prepared_vacancies['year'].max() - 4, prepared_vacancies['year'].max() + 1))
+    
+    avg_salary_by_year = calculate_average_salary_by_year(prepared_vacancies)
+    vacancy_count_by_year = calculate_vacancy_count_by_year(prepared_vacancies)
+    
+    role_vacancies = prepared_vacancies[prepared_vacancies['name'].str.contains(role_name, na=False)]
+    
+    avg_salary_by_year_for_role = calculate_average_salary_by_year_for_role(role_vacancies, target_years)
+    vacancy_count_by_year_for_role = calculate_vacancy_count_by_year_for_role(role_vacancies, target_years)
+    
+    total_role_vacancies = len(role_vacancies)
+    
+    avg_salary_by_area_for_role = calculate_average_salary_by_area(role_vacancies, total_role_vacancies)
+    vacancy_percentage_by_area_for_role = calculate_vacancy_percentage_by_area(role_vacancies, total_role_vacancies)
+
+    print(f'Динамика уровня зарплат по годам: {avg_salary_by_year}')
+    print(f'Динамика количества вакансий по годам: {vacancy_count_by_year}')
+    print(f'Динамика уровня зарплат по годам для выбранной профессии: {avg_salary_by_year_for_role}')
+    print(f'Динамика количества вакансий по годам для выбранной профессии: {vacancy_count_by_year_for_role}')
+    print(f'Уровень зарплат по городам для выбранной профессии (в порядке убывания): {avg_salary_by_area_for_role}')
+    print(f'Доля вакансий по городам для выбранной профессии (в порядке убывания): {vacancy_percentage_by_area_for_role}')
+
+if __name__ == '__main__':
+    main()
