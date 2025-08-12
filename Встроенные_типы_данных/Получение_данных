@@ -1,0 +1,28 @@
+def main():
+    vacancy = input("Введите название вакансии: ")
+    vacancy_description = input("Введите описание вакансии: ")
+    town = input("Введите город для вакансии: ")
+    work_experience = input("Введите требуемый опыт работы (лет): ")
+    lower_bound = input("Введите нижнюю границу оклада вакансии: ")
+    upper_bound = input("Введите верхнюю границу оклада вакансии: ")
+    need_free_schedule = input("Нужен свободный график (да / нет): ")
+    is_premium_job = input("Является ли данная вакансия премиум-вакансией (да / нет): ")
+
+    need_free_schedule = True if need_free_schedule == "да" else False
+    is_premium_job = True if is_premium_job == "да" else False
+
+    work_experience_int = int(work_experience) 
+    lower_bound_int = int(lower_bound)
+    upper_bound_int = int(lower_bound)
+
+    print(f"{vacancy} ({type(vacancy).__name__})")
+    print(f"{vacancy_description} ({type(vacancy_description).__name__})")
+    print(f"{town} ({type(town).__name__})")
+    print(f"{work_experience} ({type(work_experience_int).__name__})")
+    print(f"{lower_bound} ({type(lower_bound_int).__name__})")
+    print(f"{upper_bound} ({type(upper_bound_int).__name__})")
+    print(f"{need_free_schedule} ({type(need_free_schedule).__name__})")
+    print(f"{is_premium_job} ({type(is_premium_job).__name__})")
+
+if __name__ == "__main__":
+    main()
