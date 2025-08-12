@@ -1,0 +1,55 @@
+import json
+import re
+
+
+text = input()
+headings = input()
+result = {}
+
+required_fields = headings.split(', ')
+res_list = {}
+
+def capitalize_sentence(text):
+    sentences = re.split(r'\. ', text)
+    capitalized_sentences = []
+    for sentence in sentences:
+        if len(sentence) > 0:
+            capitalized_sentences.append(sentence.capitalize())
+        else:
+            capitalized_sentences.append(sentence)
+    return '. '.join(capitalized_sentences)
+
+def remove_parenthesis(s: str):
+    while ("(" in s):
+        left = s.rfind("(")
+        right = s.find(")", left)
+        s = s.replace(s[left: right + 1], "")
+    return s
+
+def main(text, required_fields):
+    text_res = text.split("; ")
+    for pair in text_res:
+        pairs_split = pair.split(': ')
+        key = pairs_split[0].strip()
+        value = pairs_split[1].rstrip(';')
+        if key in required_fields:
+            if key == 'description':
+                string_value = capitalize_sentence(value)
+            elif key == 'salary':
+                string_value =  "{0:.2f}".format(float(value))
+            elif key == 'key_phrase':
+                string_value = value.upper().strip() + '!'
+            elif key == 'addition':
+                string_value = ".." + value.lower() + ".."
+            elif key == 'company_info':
+                string_value = remove_parenthesis(value)
+            elif key == "key_skills":
+                string_value = value.replace("&nbsp", " ")
+            res_list[key] = string_value
+    return json.dumps(res_list)
+
+result = main(text, required_fields)
+print(result)
+
+
+    
