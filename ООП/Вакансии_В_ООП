@@ -1,0 +1,44 @@
+from var_dump import var_dump
+import csv
+
+
+class Vacancy:
+    def __init__(self, name, description, key_skills, experience_id, premium, employer_name, salary, area_name, published_at):
+        self.name = name
+        self.description = description
+        self.key_skills = key_skills
+        self.experience_id = experience_id
+        self.premium = premium
+        self.employer_name = employer_name
+        self.salary = salary
+        self.area_name = area_name
+        self.published_at = published_at
+    def __repr__(self):
+        return f"Vacancy(name={self.name}, description={self.description}, key_skills={self.key_skills}, experience_id={self.experience_id}, premium={self.premium}, employer_name={self.employer_name}, salary={self.salary}, published_at={self.published_at})"
+
+class Salary:
+    def __init__(self,salary_from,salary_to, salary_gross, salary_currency):
+          self.salary_from = salary_from
+          self.salary_to = salary_to
+          self.salary_gross = salary_gross
+          self.salary_currency = salary_currency
+    def __repr__(self):
+        return f"Salary(salary_from={self.salary_from}, salary_to={self.salary_to}, salary_gross={self.salary_gross},salary_currency={self.salary_currency})"
+    
+def main():
+    filename = input()
+    vacancies = []
+    with open(filename, newline="", encoding="utf-8") as f:
+        reader = csv.reader(f)
+        next(reader)
+        for row in reader:
+            salary = Salary(row[6], row[7], row[8], row[9])
+            vacancy = Vacancy(
+                row[0], row[1], row[2], row[3], row[4],
+                row[5], salary, row[10], row[11]
+            )
+            vacancies.append(vacancy)
+    var_dump(vacancies)
+
+if __name__ == '__main__':
+    main()
