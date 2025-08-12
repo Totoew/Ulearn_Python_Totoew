@@ -1,0 +1,42 @@
+import csv
+
+
+def csv_reader(file_name):
+    with open(file_name, 'r', encoding='utf-8-sig') as f1:
+        reader = csv.reader(f1)
+        headings = ["Название", "Описание", "Навыки", "Опыт работы", "Премиум-вакансия", "Компания", "Нижняя граница вилки оклада",
+                    "Верхняя граница вилки оклада", "Оклад указан до вычета налогов", "Идентификатор валюты оклада", "Название региона",
+                    "Дата и время публикации вакансии"]
+        list_reader = list(reader)
+        return list_reader, headings
+
+def print_vacancies(vacancies, titles):
+    current_index = 1
+    if len(vacancies) > 1:
+        for vacancy in vacancies[1:]:
+                formatted_line = []
+                for i in range(len(titles)):
+                    if i == 2:  # Заменяем переносы строк на запятые в ключевых навыках
+                        skill_list = vacancy[i].split('\n')
+                        skill_string = ', '.join(skill_list)
+                        formatted_line.append(titles[i] + ': ' + skill_string)
+                    elif i == 4 or i == 8:
+                        if vacancy[i] == "True":
+                            formatted_line.append(titles[i] + ': ' + "Да")
+                        else:
+                            formatted_line.append(titles[i] + ': ' + "Нет")
+                    else:
+                        formatted_line.append(titles[i] + ': ' + vacancy[i].strip())
+                formatted_line = '\n'.join(formatted_line)
+                print(formatted_line)
+                current_index += 1
+                if (current_index < len(vacancies)):
+                    print()
+
+def main():
+    file = input()
+    vacancies, titles = csv_reader(file)
+    print_vacancies(vacancies, titles)
+
+if __name__ == '__main__':
+    main()
