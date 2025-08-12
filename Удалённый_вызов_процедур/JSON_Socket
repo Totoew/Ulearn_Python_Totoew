@@ -1,0 +1,49 @@
+import socket
+import json
+import pandas as pd
+
+
+def load_organizations(filename):
+    dataframe = pd.read_csv(filename)
+    organizations = {
+        row['Name']: {
+            'Website': row['Website'],
+            'Country': row['Country'],
+            'Employees': row['Number of employees'],
+            'Description': row['Description']
+        }
+        for _, row in dataframe.iterrows()
+    }
+    return organizations
+
+def start_server():
+    organizations = load_organizations("organizations.csv")
+    host = "127.0.0.32"
+    port = 12345
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind((host, port))
+    server.listen(10)
+    while True:
+        client, _ = server.accept()
+        while True:
+            data = client.recv(1024).decode()
+            resp_data = {}
+            req_data = json.loads(data)
+            com = req_data.get("command")
+            operat = req_data.get("operation")
+            org_name = req_data.get("name")
+            if com == "get_data":
+                match operat:
+                    case "get_website":
+                        resp_data["result"] = organizations.get(org_name).get("Website")
+                    case "get_country":
+                        resp_data["result"] = organizations.get(org_name).get("Country")
+                    case "get_number_of_employees":
+                        resp_data["result"] = organizations.get(org_name).get("Employees")
+                    case "get_description":
+                        resp_data["result"] = organizations.get(org_name).get("Description")
+            resp_data = json.dumps(resp_data)
+            client.sendall(resp_data.encode())
+
+if __name__ == "__main__":
+    start_server()
