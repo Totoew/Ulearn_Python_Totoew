@@ -1,0 +1,17 @@
+import matplotlib.pyplot as plt
+
+
+# Нужно создать график, состоящий из 4 подграфиков (2x2), в функции create_plot
+def get_statistic():
+    csv = 'vacancies.csv'
+    ...
+
+
+def create_plot():
+    csv = 'vacancies.csv'
+    vac = input()
+    fig, sub = plt.subplots(2, 2)
+
+    ...
+
+    return sub
