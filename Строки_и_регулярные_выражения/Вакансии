@@ -1,0 +1,22 @@
+import json
+import bs4
+
+html = input()
+
+exchange = {
+    '₽': 1.0,
+    '$': 100.0,
+    '€': 105.0,
+    '₸': 0.210,
+    'Br': 30.0,
+}
+
+result = {
+    'vacancy': None,
+    'salary': None,
+    'experience': None,
+    'company': None,
+    'description': None,
+    'skills': None,
+    'created_at': None,
+}
