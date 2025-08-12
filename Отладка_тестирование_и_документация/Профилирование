@@ -1,0 +1,117 @@
+import csv
+from datetime import datetime
+from collections import defaultdict
+
+
+currency_to_rub = {
+    "Манаты": 35.68,
+    "Белорусские рубли": 23.91,
+    "Евро": 59.90,
+    "Грузинский лари": 21.74,
+    "Киргизский сом": 0.76,
+    "Тенге": 0.13,
+    "Рубли": 1,
+    "Гривны": 1.64,
+    "Доллары": 60.66,
+    "Узбекский сум": 0.0055,
+}
+
+class Vacancy:
+    def __init__(self, name, salary_from, salary_to, salary_currency, area_name, published_at):
+        self.name = name
+        self.salary_from = salary_from
+        self.salary_to = salary_to
+        self.salary_currency = salary_currency
+        self.area_name = area_name
+        self.published_at = datetime.strptime(published_at, '%H:%M:%S %d/%m/%Y')
+        self.year = self.published_at.year
+
+    def get_average_salary(self):
+        return (self.salary_from + self.salary_to) / 2 if self.salary_from and self.salary_to else 0
+
+    def get_salary_in_rub(self):
+        avg_salary = self.get_average_salary()
+        return avg_salary * currency_to_rub.get(self.salary_currency, 1)
+
+class Salary:
+    @staticmethod
+    def convert_salary_to_rub(vacancy):
+        return vacancy.get_salary_in_rub()
+
+class DataSet:
+    def __init__(self, filename):
+        self.filename = filename
+        self.vacancies = []
+        self.load_data()
+
+    def load_data(self):
+        with open(self.filename, newline='', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                vacancy = Vacancy(
+                    row['name'],
+                    float(row['salary_from']) if row['salary_from'] else 0,
+                    float(row['salary_to']) if row['salary_to'] else 0,
+                    row['salary_currency'],
+                    row['area_name'],
+                    row['published_at']
+                )
+                self.vacancies.append(vacancy)
+
+class Statistics:
+    def __init__(self, dataset):
+        self.dataset = dataset
+
+    def get_salary_stat(self, profession_name):
+        vacancies = self.dataset.vacancies
+        all_vacancies_by_year = defaultdict(list)
+        all_vacancies_by_city = defaultdict(list)
+
+        profession_vacancies_by_year = defaultdict(list)
+        profession_vacancies_by_city = defaultdict(list)
+
+        for vacancy in vacancies:
+            all_vacancies_by_year[vacancy.year].append(vacancy)
+            all_vacancies_by_city[vacancy.area_name].append(vacancy)
+
+            if profession_name.lower() in vacancy.name.lower():
+                profession_vacancies_by_year[vacancy.year].append(vacancy)
+                profession_vacancies_by_city[vacancy.area_name].append(vacancy)
+
+        avg_salary_by_year = {year: round(sum(vacancy.get_salary_in_rub() for vacancy in vacancies) / len(vacancies))
+                              for year, vacancies in all_vacancies_by_year.items()}
+        vacancies_by_year = {year: len(vacancies) for year, vacancies in all_vacancies_by_year.items()}
+        avg_salary_by_year_prof = {
+            year: round(sum(vacancy.get_salary_in_rub() for vacancy in vacancies) / len(vacancies))
+            for year, vacancies in profession_vacancies_by_year.items()}
+        
+        vacancies_by_year_prof = {year: len(vacancies) for year, vacancies in profession_vacancies_by_year.items()}
+
+        avg_salary_by_city = {city: round(sum(vacancy.get_salary_in_rub() for vacancy in vacancies) / len(vacancies))
+                              for city, vacancies in all_vacancies_by_city.items()}
+        top_10_cities_by_salary = dict(sorted(avg_salary_by_city.items(), key=lambda item: item[1], reverse=True)[:10])
+
+        total_vacancies = len(vacancies)
+        city_share = {city: round(len(vacancies) / total_vacancies, 4) for city, vacancies in
+                      all_vacancies_by_city.items()}
+        top_10_cities_by_share = dict(sorted(city_share.items(), key=lambda item: item[1], reverse=True)[:10])
+
+        print(f"Средняя зарплата по годам: {dict(sorted(avg_salary_by_year.items()))}")
+        print(f"Количество вакансий по годам: {dict(sorted(vacancies_by_year.items()))}")
+        print(
+            f"Средняя зарплата по годам для профессии '{profession_name}': {dict(sorted(avg_salary_by_year_prof.items()))}")
+        print(
+            f"Количество вакансий по годам для профессии '{profession_name}': {dict(sorted(vacancies_by_year_prof.items()))}")
+        print(f"Средняя зарплата по городам: {top_10_cities_by_salary}")
+        print(f"Доля вакансий по городам: {top_10_cities_by_share}")
+
+def main():
+    filename = input()
+    profession_name = input()
+
+    dataset = DataSet(filename)
+    statistics = Statistics(dataset)
+    statistics.get_salary_stat(profession_name)
+
+if __name__ == '__main__':
+    main()
