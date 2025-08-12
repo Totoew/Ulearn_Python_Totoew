@@ -1,0 +1,22 @@
+import multiprocessing as mp
+
+
+def parse_input(text):
+    new_text = text.strip("[]")
+    list= new_text.split('], [')
+    res=[]
+    for arr in list:
+        splt = arr.split()
+        res.append([int(i) for i in splt])
+    return res
+
+def main():
+    input_text = input()
+    array_2d = parse_input(input_text)
+    with mp.Pool(processes=mp.cpu_count()) as pool:
+        results = pool.map(worker_function, array_2d)
+    total = sum(results)
+    print(total)
+
+if __name__ == "__main__":
+    main()
