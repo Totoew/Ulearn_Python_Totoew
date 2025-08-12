@@ -1,0 +1,94 @@
+from prettytable import PrettyTable, ALL
+import re
+import csv
+
+
+def apply_filter(data_reader, rows_to_process, filtering_params):
+    if filtering_params == ['']:
+        return data_reader, rows_to_process, filtering_params
+
+    if filtering_params[0] == 6:
+        filtered_results = []
+        for row in data_reader:
+            pattern = r'\b(\d{1,3}(?:\s\d{3})*) - (\d{1,3}(?:\s\d{3})*)\b'
+            matches = re.findall(pattern, row[filtering_params[0]])
+            if matches:
+                lower_limit = int(matches[0][0].replace(' ', ''))
+                upper_limit = int(matches[0][1].replace(' ', ''))
+                if lower_limit <= int(filtering_params[1]) <= upper_limit:
+                    filtered_results.append(row)
+        return filtered_results, rows_to_process, filtering_params
+
+    if filtering_params[0] == 'Идентификатор валюты оклада':
+        filtered_results = (row for row in data_reader if filtering_params[1] in row[6])
+        return filtered_results, rows_to_process, filtering_params
+
+    filtered_results = (row for row in data_reader if filtering_params[1] in row[filtering_params[0]])
+    return filtered_results, rows_to_process, filtering_params
+
+
+def range_counter_wrapper(data_reader, rows_to_process, filtering_params):
+    if rows_to_process == []:
+        rows_to_process = [1, float('inf')]
+    elif len(rows_to_process) == 1:
+        rows_to_process = [rows_to_process[0], float('inf')]
+    return data_reader, rows_to_process, filtering_params
+
+
+def build_table(data_reader, rows_to_process, filtering_params):
+    data_reader, rows_to_process, filtering_params = range_counter_wrapper(
+        data_reader,
+        rows_to_process,
+        filtering_params
+    )
+    data_reader, rows_to_process, filtering_params = apply_filter(
+        data_reader,
+        rows_to_process,
+        filtering_params
+    )
+    return {
+        index + 1: row
+        for index, row in enumerate(data_reader)
+        if rows_to_process[0] <= index + 1 <= rows_to_process[1]
+    }
+
+
+shorten_text = lambda text: text[:100] + "..." if len(text) > 100 else text
+
+
+def append_row_to_table(table_object, row_values, row_number):
+    table_object.add_row([row_number] + [shorten_text(value) for value in row_values])
+
+
+def match_column_header(headers_list, sorted_key):
+    if sorted_key != [''] and sorted_key[0] != "Идентификатор валюты оклада":
+        sorted_key[0] = headers_list.index(sorted_key[0])
+    return sorted_key
+
+
+def initialize_table(required_headers):
+    new_table = PrettyTable()
+    new_table.hrules = ALL
+    new_table.field_names = ["№"] + required_headers
+    max_col_width = 20
+    for header in new_table.field_names:
+        new_table.align[header] = 'l'
+        new_table.max_width[header] = max_col_width
+    return new_table
+
+
+input_file_path = input()
+sorted_key = input().split(': ')
+rows_to_process = list(map(int, input().split()))
+required_headers = input().split(', ')
+
+with open(input_file_path, encoding="utf-8-sig") as file:
+    data_reader = csv.reader(file)
+    headers_list = next(data_reader)
+    table_object = initialize_table(headers_list)
+    sorted_key = match_column_header(headers_list, sorted_key)
+    results = build_table(data_reader, rows_to_process, sorted_key)
+    for key, value in results.items():
+        append_row_to_table(table_object, value, key)
+
+print(table_object.get_string(fields=['№'] + (required_headers if required_headers != [''] else headers_list)))
