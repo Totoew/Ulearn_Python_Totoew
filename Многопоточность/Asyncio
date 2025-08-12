@@ -1,0 +1,9 @@
+import asyncio
+
+
+async def main(filenames):
+    names = []
+    for filename in filenames:
+        names.append(read_file_sync(filename))
+    names_str = ' '.join(name for name in names)
+    return names_str
