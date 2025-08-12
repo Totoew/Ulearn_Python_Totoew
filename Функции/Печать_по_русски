@@ -1,0 +1,77 @@
+import csv
+import decimal
+
+
+experience = {"noExperience": "Нет опыта",
+               "between1And3": "От 1 года до 3 лет",
+               "between3And6": "От 3 до 6 лет",
+               "moreThan6": "Более 6 лет"}
+money = {"AZN": "Манаты", "BYR": "Белорусские рубли",
+        "EUR": "Евро", "GEL": "Грузинский лари",
+        "KGS": "Киргизский сом", "KZT": "Тенге",
+        "RUR": "Рубли", "UAH": "Гривны",
+        "USD": "Доллары", "UZS": "Узбекский сум"}
+
+def csv_reader(file_name):
+    with open(file_name, 'r', encoding='utf-8-sig') as f1:
+        reader = csv.reader(f1)
+        headings = ["Название", "Описание", "Навыки", "Опыт работы", "Премиум-вакансия", "Компания", "Нижняя граница вилки оклада",
+                    "Верхняя граница вилки оклада", "Оклад указан до вычета налогов", "Идентификатор валюты оклада", "Название региона",
+                    "Дата и время публикации вакансии"]
+        list_reader = list(reader)
+        return list_reader, headings
+
+def print_vacancies(vacancies, titles):
+    current_index = 1
+    if len(vacancies) > 1:
+            for vacancy in vacancies[1:]:
+                formatted_line = {}
+                for i in range(len(titles)):
+                    if i == 2:  # Заменяем переносы строк на запятые в ключевых навыках
+                        skill_list = vacancy[i].split('\n')
+                        skill_string = ', '.join(skill_list)
+                        formatted_line[titles[i]] = skill_string
+                    elif i == 4:
+                        if vacancy[i] == "True":
+                            formatted_line[titles[i]] = "Да"
+                        else:
+                            formatted_line[titles[i]] = "Нет"
+                    elif i == 8:
+                        if vacancy[i] == "True":
+                            formatted_line[titles[i]] = "Без вычета налогов"
+                        else:
+                            formatted_line[titles[i]] = "С вычетом налогов"
+                    else:
+                        formatted_line[titles[i]] = vacancy[i].strip()
+                new_dict = formatted_line.copy()
+                list_of_tuples = list(formatted_line.items())
+                new_dict['Опыт работы'] = experience[formatted_line['Опыт работы']]
+                mon = money[formatted_line['Идентификатор валюты оклада']]
+                new_dict.pop("Нижняя граница вилки оклада")
+                new_dict.pop("Верхняя граница вилки оклада")
+                new_dict.pop("Оклад указан до вычета налогов")
+                new_dict.pop("Идентификатор валюты оклада")
+                new_dict.pop("Название региона")
+                new_dict.pop("Дата и время публикации вакансии")
+
+                num1 = decimal.Decimal(list_of_tuples[6][1])
+                num1 = '{0:,}'.format(num1).replace(',', ' ').replace('.0','')
+                num2 = decimal.Decimal(list_of_tuples[7][1])
+                num2 = '{0:,}'.format(num2).replace(',', ' ').replace('.0','')
+
+                new_dict["Оклад"] = f"{num1} - {num2} ({mon}) ({list_of_tuples[8][1]})"
+                new_dict["Название региона"] = f"{list_of_tuples[10][1]}"
+                new_dict["Дата публикации вакансии"] = f"{list_of_tuples[11][1]}"
+                for i in new_dict:
+                    print(f"{i}: {new_dict[i]}")
+                current_index += 1
+                if (current_index < len(vacancies)):
+                        print()
+
+def main():
+    file = input()
+    vacancies, titles = csv_reader(file)
+    print_vacancies(vacancies, titles)
+
+if __name__ == '__main__':
+    main()
