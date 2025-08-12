@@ -1,0 +1,17 @@
+import pandas as pd
+
+
+vacancies = pd.read_csv('vacancies_small.csv')
+
+column = input()
+key = input()
+column_sec = input()
+sort_by = input()
+
+asc = sort_by == 'asc'
+
+filtered_vac = vacancies[vacancies[column].str.contains(key, case=False, na=False)]
+
+vac_sorted = (filtered_vac.reset_index().sort_values(by=[column_sec, 'index'], ascending=[asc, True]).set_index('index'))
+result = vac_sorted['name'].tolist()
+print(result)
