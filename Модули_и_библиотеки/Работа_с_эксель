@@ -1,0 +1,110 @@
+import csv
+from collections import defaultdict
+from openpyxl import Workbook
+from openpyxl.styles import Border, Side
+
+def create_report():
+    csv_file = 'vacancies.csv'  # Файл данных
+    salaries_by_year = defaultdict(list)
+    vacancies_by_year = defaultdict(int)
+    salaries_by_city = defaultdict(list)
+    vacancies_by_city = defaultdict(int)
+
+    # Чтение данных из CSV
+    with open(csv_file, 'r', encoding='utf-8') as file:
+        reader = csv.reader(file)
+
+        for row in reader:
+            if len(row) < 6:
+                continue  # Пропускаем строки с недостаточным числом колонок
+
+            try:
+                # Извлечение данных
+                salary_from = float(row[1])
+                salary_to = float(row[2])
+                city = row[4]
+                date = row[5]
+
+                # Рассчитываем среднюю зарплату
+                avg_salary = (salary_from + salary_to) / 2
+                year = int(date.split('-')[0])  # Извлекаем год из даты
+
+                # Заполняем статистику
+                salaries_by_year[year].append(avg_salary)
+                vacancies_by_year[year] += 1
+
+                salaries_by_city[city].append(avg_salary)
+                vacancies_by_city[city] += 1
+
+            except (ValueError, IndexError):
+                continue  # Пропускаем строки с некорректными данными
+
+    # Подготовка данных для Excel
+    wb = Workbook()
+
+    # Настройка тонких границ
+    thin_border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin'),
+    )
+
+    # Вкладка "Статистика по годам"
+    if "Sheet" in wb.sheetnames:
+        ws1 = wb["Sheet"]
+        ws1.title = "Статистика по годам"
+    else:
+        ws1 = wb.create_sheet("Статистика по годам")
+    ws1.append(["Год", "Средняя зарплата", "Количество вакансий"])
+    for year in range(2007, 2023):  # Года с 2007 по 2022
+        if year in salaries_by_year:
+            avg_salary = round(sum(salaries_by_year[year]) / len(salaries_by_year[year]))
+            vacancies = vacancies_by_year[year]
+            ws1.append([year, avg_salary, vacancies])
+
+    # Применение границ ко всем ячейкам на странице
+    for row in ws1.iter_rows(min_row=1, max_row=ws1.max_row, max_col=ws1.max_column):
+        for cell in row:
+            cell.border = thin_border
+
+    # Настройка ширины столбцов для страницы "Статистика по годам"
+    ws1.column_dimensions['A'].width = 6
+    ws1.column_dimensions['B'].width = 20
+    ws1.column_dimensions['C'].width = 20
+
+    # Вкладка "Статистика по городам"
+    ws2 = wb.create_sheet("Статистика по городам")
+    ws2.append(["Город", "Уровень зарплат", "", "Город", "Доля вакансий, %"])
+    total_vacancies = sum(vacancies_by_city.values())
+
+    # Подсчет долей и сортировка
+    city_stats = [
+        (city, sum(salaries_by_city[city]) / len(salaries_by_city[city]),
+         (vacancies_by_city[city] / total_vacancies) * 100)
+        for city in vacancies_by_city
+        if (vacancies_by_city[city] / total_vacancies) > 0.01  # Доля > 1%
+    ]
+    # Сортировка по средней зарплате (убывание) и городу (возрастание)
+    city_stats.sort(key=lambda x: (-x[1], x[0]))  
+
+    # Заполнение статистики по городам (только первые 10 значений)
+    for city, avg_salary, vacancy_share in city_stats[:10]:
+        ws2.append([city, round(avg_salary), "", city, round(vacancy_share, 2)])
+
+    # Применение границ ко всем ячейкам на странице
+    for row in ws2.iter_rows(min_row=1, max_row=ws2.max_row, max_col=ws2.max_column):
+        for cell in row:
+            cell.border = thin_border
+
+    # Настройка ширины столбцов для страницы "Статистика по городам"
+    ws2.column_dimensions['A'].width = 20
+    ws2.column_dimensions['B'].width = 20
+    ws2.column_dimensions['C'].width = 2
+    ws2.column_dimensions['D'].width = 20
+    ws2.column_dimensions['E'].width = 20
+
+    # Сохранение файла
+    wb.save('student_works/report.xlsx')
+
+create_report()
