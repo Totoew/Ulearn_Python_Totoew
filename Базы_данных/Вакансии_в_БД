@@ -1,0 +1,35 @@
+import sqlite3
+from math import floor
+import pandas as pd
+
+def get_exchange_rate(currency: str, currency_table: str, date: str, connection: sqlite3.Connection) -> float | None:
+    if pd.isna(currency):
+        return None  
+    if currency == 'RUR':
+        return 1  
+    query = f"SELECT {currency} FROM {currency_table} WHERE date = ?"
+    try:
+        result = pd.read_sql(query, connection, params=[date])
+        if not result.empty:
+            return result.iloc[0, 0] 
+    except Exception as e:
+        print(f"Ошибка при выполнении запроса для валюты {currency}: {e}")
+    return None 
+
+database_name = input()
+csv_file = input()
+table_name = input()
+currency_table = input()
+
+with sqlite3.connect(database_name) as connection:
+    data_frame = pd.read_csv(csv_file)
+    data_frame['average_salary'] = data_frame[['salary_from', 'salary_to']].mean(axis=1)
+    data_frame['published_at'] = data_frame['published_at'].str.replace(r'\+0300', '+03:00', regex=True)
+    data_frame['year_month'] = pd.to_datetime(data_frame['published_at'], errors='coerce').dt.strftime('%Y-%m')
+    data_frame['exchange_rate'] = data_frame.apply(
+        lambda row: get_exchange_rate(row['salary_currency'], currency_table, row['year_month'], connection), axis=1
+    )
+    data_frame['salary'] = data_frame.apply(
+        lambda row: floor(row['average_salary'] * row['exchange_rate']) if pd.notna(row['average_salary']) and pd.notna(row['exchange_rate']) else None, axis=1
+    )
+    data_frame[['name', 'salary', 'area_name', 'published_at']].to_sql(table_name, connection, index=False)
